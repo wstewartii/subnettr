@@ -77,6 +77,7 @@ var nmask string
 var sbnetList []string
 var bcastList []string
 var lhostList []string
+var fhostList []string
 
 if len(os.Args) < 3 {
   fmt.Println("Error: address and subnet is required")
@@ -122,6 +123,14 @@ for i,v := range addrList {
 }
 for i,v := range addrList {
   if i == 3 {
+  fhostList = append(fhostList,strconv.FormatUint(uint64(subnettr(v, nmaskList[i], 1)+1),10))
+  } else {
+  fhostList = append(fhostList,strconv.FormatUint(uint64(subnettr(v, nmaskList[i], 1)),10))
+
+  }
+}
+for i,v := range addrList {
+  if i == 3 {
   lhostList = append(lhostList,strconv.FormatUint(uint64(subnettr(v, nmaskList[i], 2)-1),10))
   } else {
   lhostList = append(lhostList,strconv.FormatUint(uint64(subnettr(v, nmaskList[i], 2)),10))
@@ -131,12 +140,13 @@ for i,v := range addrList {
 
 subnet := strings.Join(sbnetList, ".")
 lastHost := strings.Join(lhostList, ".")
+firstHost := strings.Join(fhostList, ".")
 broadcast := strings.Join(bcastList, ".")
 netmask := strings.Join(nmaskList, ".")
 
 fmt.Println("Net Address: " + subnet)
+fmt.Println("Address Range: " + firstHost + "-" + lastHost)
 fmt.Println("Broadcast Address: " + broadcast)
-fmt.Println("Subnet Range: " + subnet + "-" + lastHost)
 fmt.Println("Subnet Mask: " + netmask)
 
 
