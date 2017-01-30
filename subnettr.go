@@ -4,6 +4,7 @@ import "fmt"
 import "strconv"
 import "os"
 import "strings"
+import "regexp"
 
 func subnettr(addr string, sbnet string, query int) uint8 {
 
@@ -72,6 +73,7 @@ return netMask
 
 func main() {
 
+var nmask string
 var sbnetList []string
 var bcastList []string
 var lhostList []string
@@ -81,8 +83,25 @@ if len(os.Args) < 2 {
   os.Exit(1)
 }
 
+maskFormat, merr := regexp.MatchString("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$",os.Args[2])
+if merr != nil {
+  fmt.Println(merr)
+}
+cidrFormat, cerr := regexp.MatchString("^[0-9]{2,2}$",os.Args[2])
+if cerr != nil {
+  fmt.Println(cerr)
+}
+
+if maskFormat == true {
+nmask = os.Args[2];
+} else if cidrFormat == true {
+nmask = cidr_to_mask(os.Args[2]);
+} else {
+fmt.Println("Error: invalid netmask format!")
+os.Exit(1)
+}
+
 addr := os.Args[1];
-nmask := cidr_to_mask(os.Args[2]);
 
 addrList := strings.Split(addr, ".")
 nmaskList := strings.Split(nmask, ".")
