@@ -83,6 +83,10 @@ if len(os.Args) < 2 {
   os.Exit(1)
 }
 
+addrFormat, aerr := regexp.MatchString("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$",os.Args[1])
+if aerr != nil {
+  fmt.Println(aerr)
+}
 maskFormat, merr := regexp.MatchString("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$",os.Args[2])
 if merr != nil {
   fmt.Println(merr)
@@ -92,6 +96,10 @@ if cerr != nil {
   fmt.Println(cerr)
 }
 
+if addrFormat == false {
+fmt.Println("Error: invalid address format!")
+os.Exit(1)
+}
 if maskFormat == true {
 nmask = os.Args[2];
 } else if cidrFormat == true {
@@ -124,10 +132,12 @@ for i,v := range addrList {
 subnet := strings.Join(sbnetList, ".")
 lastHost := strings.Join(lhostList, ".")
 broadcast := strings.Join(bcastList, ".")
+netmask := strings.Join(nmaskList, ".")
 
 fmt.Println("Net Address: " + subnet)
 fmt.Println("Broadcast Address: " + broadcast)
 fmt.Println("Subnet Range: " + subnet + "-" + lastHost)
+fmt.Println("Subnet Mask: " + netmask)
 
 
 }
