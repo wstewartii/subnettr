@@ -91,7 +91,7 @@ maskFormat, merr := regexp.MatchString("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.
 if merr != nil {
   fmt.Println(merr)
 }
-cidrFormat, cerr := regexp.MatchString("^[0-9]{2,2}$",os.Args[2])
+cidrFormat, cerr := regexp.MatchString("^[0-9]{1,2}$",os.Args[2])
 if cerr != nil {
   fmt.Println(cerr)
 }
