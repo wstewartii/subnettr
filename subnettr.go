@@ -144,8 +144,8 @@ firstHost := strings.Join(fhostList, ".")
 broadcast := strings.Join(bcastList, ".")
 netmask := strings.Join(nmaskList, ".")
 
-fmt.Println("Net Address: " + subnet)
 fmt.Println("Address Range: " + firstHost + "-" + lastHost)
+fmt.Println("Net Address: " + subnet)
 fmt.Println("Broadcast Address: " + broadcast)
 fmt.Println("Subnet Mask: " + netmask)
 
