@@ -78,7 +78,7 @@ var sbnetList []string
 var bcastList []string
 var lhostList []string
 
-if len(os.Args) < 2 {
+if len(os.Args) < 3 {
   fmt.Println("Error: address and subnet is required")
   os.Exit(1)
 }
