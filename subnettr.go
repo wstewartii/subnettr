@@ -39,6 +39,37 @@ default:
 return resp
 }
 
+func cidr_to_mask(cidr string) string {
+
+var maskList []string
+var netMask string
+
+cidrInt, err := strconv.ParseUint(cidr, 10, 8);
+if err != nil {
+fmt.Println(err)
+}
+
+for i :=0;i<4;i++ {
+  tmpstring := ""
+  for ii :=0;ii<8;ii++ {
+  if cidrInt > 0 {
+  tmpstring = tmpstring + "1"
+  cidrInt --
+  } else {
+  tmpstring = tmpstring + "0"
+  }
+  }
+  tmpint, ierr := strconv.ParseUint(tmpstring, 2, 64)
+  if ierr != nil {
+    fmt.Println(ierr)
+  }
+  maskList = append(maskList, strconv.FormatUint(uint64(tmpint),10))
+}
+netMask = strings.Join(maskList, ".")
+
+return netMask
+}
+
 func main() {
 
 var sbnetList []string
@@ -51,7 +82,7 @@ if len(os.Args) < 2 {
 }
 
 addr := os.Args[1];
-nmask := os.Args[2];
+nmask := cidr_to_mask(os.Args[2]);
 
 addrList := strings.Split(addr, ".")
 nmaskList := strings.Split(nmask, ".")
@@ -78,5 +109,6 @@ broadcast := strings.Join(bcastList, ".")
 fmt.Println("Net Address: " + subnet)
 fmt.Println("Broadcast Address: " + broadcast)
 fmt.Println("Subnet Range: " + subnet + "-" + lastHost)
+
 
 }
