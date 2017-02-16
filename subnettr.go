@@ -3,6 +3,7 @@ package main
 import "fmt"
 import "strconv"
 import "os"
+import "flag"
 import "strings"
 import "regexp"
 
@@ -79,20 +80,26 @@ var bcastList []string
 var lhostList []string
 var fhostList []string
 
-if len(os.Args) < 3 {
-  fmt.Println("Error: address and subnet is required")
+
+flag.Usage = func() {
+    fmt.Fprintf(os.Stdout, "Usage: subnettr <ip address> <subnet mask>\n\n<ip address> The ip address e.g., 192.168.0.1\n\n<subnet mask> The subnet mask or cidr block e.g., 255.255.255.0 or 24\n\n")
+}
+flag.Parse()
+
+if len(flag.Args()) < 2 {
+  flag.Usage()
   os.Exit(1)
 }
 
-addrFormat, aerr := regexp.MatchString("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$",os.Args[1])
+addrFormat, aerr := regexp.MatchString("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$",flag.Args()[0])
 if aerr != nil {
   fmt.Println(aerr)
 }
-maskFormat, merr := regexp.MatchString("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$",os.Args[2])
+maskFormat, merr := regexp.MatchString("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$",flag.Args()[1])
 if merr != nil {
   fmt.Println(merr)
 }
-cidrFormat, cerr := regexp.MatchString("^[0-9]{1,2}$",os.Args[2])
+cidrFormat, cerr := regexp.MatchString("^[0-9]{1,2}$",flag.Args()[1])
 if cerr != nil {
   fmt.Println(cerr)
 }
@@ -102,15 +109,15 @@ fmt.Println("Error: invalid address format!")
 os.Exit(1)
 }
 if maskFormat == true {
-nmask = os.Args[2];
+nmask = flag.Args()[1];
 } else if cidrFormat == true {
-nmask = cidr_to_mask(os.Args[2]);
+nmask = cidr_to_mask(flag.Args()[1]);
 } else {
 fmt.Println("Error: invalid netmask format!")
 os.Exit(1)
 }
 
-addr := os.Args[1];
+addr := flag.Args()[0];
 
 addrList := strings.Split(addr, ".")
 nmaskList := strings.Split(nmask, ".")
