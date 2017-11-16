@@ -1,11 +1,10 @@
 package main
 
-import "strconv"
 import "testing"
 
 func TestSubnetter(t *testing.T) {
-	subnet := strconv.FormatUint(uint64(subnettr("192", "255", 1)),10)
-	bcast := strconv.FormatUint(uint64(subnettr("1", "0", 2)),10)
+	subnet := subnettr("192", "255", 1)
+	bcast := subnettr("1", "0", 2)
 	if bcast != "255" {
 	  t.Errorf("Invalid broadcast return value for subnettr. Got %s, expected %s.", bcast, "255")
 	}

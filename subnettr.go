@@ -7,9 +7,10 @@ import "flag"
 import "strings"
 import "regexp"
 
-func subnettr(addr string, sbnet string, query int) uint8 {
+func subnettr(addr string, sbnet string, query int) string {
 
 var resp uint8
+var conv_resp string
 
 address, aErr := strconv.ParseUint(addr, 10, 8);
 if aErr != nil {
@@ -27,6 +28,7 @@ netAddress := netMask&ipAddr
 inverse := ^netMask
 broadcastAddress := netAddress|inverse
 
+
 switch query {
 case 1:
   resp = netAddress
@@ -34,12 +36,19 @@ case 1:
 case 2:
   resp = broadcastAddress
   _ = resp
+case 3:
+  resp = netAddress + 1
+  _ = resp
+case 4:
+  resp = broadcastAddress - 1
+  _ = resp
 default:
   resp = netMask
   _ = resp
 }
 
-return resp
+conv_resp = strconv.FormatUint(uint64(resp),10)
+return conv_resp
 }
 
 func cidr_to_mask(cidr string) string {
@@ -115,24 +124,30 @@ addrList := strings.Split(addr, ".")
 nmaskList := strings.Split(nmask, ".")
 
 for i,v := range addrList {
-  sbnetList = append(sbnetList,strconv.FormatUint(uint64(subnettr(v, nmaskList[i], 1)),10))
+  //sbnetList = append(sbnetList,strconv.FormatUint(uint64(subnettr(v, nmaskList[i], 1)),10))
+  sbnetList = append(sbnetList,subnettr(v, nmaskList[i], 1))
 }
 for i,v := range addrList {
-  bcastList = append(bcastList,strconv.FormatUint(uint64(subnettr(v, nmaskList[i], 2)),10))
+  //bcastList = append(bcastList,strconv.FormatUint(uint64(subnettr(v, nmaskList[i], 2)),10))
+  bcastList = append(bcastList,subnettr(v, nmaskList[i], 2))
 }
 for i,v := range addrList {
   if i == 3 {
-  fhostList = append(fhostList,strconv.FormatUint(uint64(subnettr(v, nmaskList[i], 1)+1),10))
+  //fhostList = append(fhostList,strconv.FormatUint(uint64(subnettr(v, nmaskList[i], 1)+1),10))
+  fhostList = append(fhostList,subnettr(v, nmaskList[i], 3))
   } else {
-  fhostList = append(fhostList,strconv.FormatUint(uint64(subnettr(v, nmaskList[i], 1)),10))
+  //fhostList = append(fhostList,strconv.FormatUint(uint64(subnettr(v, nmaskList[i], 1)),10))
+  fhostList = append(fhostList,subnettr(v, nmaskList[i], 1))
 
   }
 }
 for i,v := range addrList {
   if i == 3 {
-  lhostList = append(lhostList,strconv.FormatUint(uint64(subnettr(v, nmaskList[i], 2)-1),10))
+  //lhostList = append(lhostList,strconv.FormatUint(uint64(subnettr(v, nmaskList[i], 2)-1),10))
+  lhostList = append(lhostList,subnettr(v, nmaskList[i], 4))
   } else {
-  lhostList = append(lhostList,strconv.FormatUint(uint64(subnettr(v, nmaskList[i], 2)),10))
+  //lhostList = append(lhostList,strconv.FormatUint(uint64(subnettr(v, nmaskList[i], 2)),10))
+  lhostList = append(lhostList,subnettr(v, nmaskList[i], 2))
 
   }
 }
