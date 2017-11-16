@@ -38,6 +38,7 @@ default:
   resp = netMask
   _ = resp
 }
+
 return resp
 }
 
@@ -72,8 +73,10 @@ netMask = strings.Join(maskList, ".")
 return netMask
 }
 
-func main() {
+func subnettrCore(addr string, sbnet string) []string {
 
+
+var respList []string
 var nmask string
 var sbnetList []string
 var bcastList []string
@@ -81,25 +84,16 @@ var lhostList []string
 var fhostList []string
 
 
-flag.Usage = func() {
-    fmt.Fprintf(os.Stdout, "Usage: subnettr <ip address> <subnet mask>\n\n<ip address> The ip address e.g., 192.168.0.1\n\n<subnet mask> The subnet mask or cidr block e.g., 255.255.255.0 or 24\n\n")
-}
-flag.Parse()
 
-if len(flag.Args()) < 2 {
-  flag.Usage()
-  os.Exit(1)
-}
-
-addrFormat, aerr := regexp.MatchString("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$",flag.Args()[0])
+addrFormat, aerr := regexp.MatchString("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$",addr)
 if aerr != nil {
   fmt.Println(aerr)
 }
-maskFormat, merr := regexp.MatchString("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$",flag.Args()[1])
+maskFormat, merr := regexp.MatchString("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$",sbnet)
 if merr != nil {
   fmt.Println(merr)
 }
-cidrFormat, cerr := regexp.MatchString("^[0-9]{1,2}$",flag.Args()[1])
+cidrFormat, cerr := regexp.MatchString("^[0-9]{1,2}$",sbnet)
 if cerr != nil {
   fmt.Println(cerr)
 }
@@ -109,15 +103,13 @@ fmt.Println("Error: invalid address format!")
 os.Exit(1)
 }
 if maskFormat == true {
-nmask = flag.Args()[1];
+nmask = sbnet;
 } else if cidrFormat == true {
-nmask = cidr_to_mask(flag.Args()[1]);
+nmask = cidr_to_mask(sbnet);
 } else {
 fmt.Println("Error: invalid netmask format!")
 os.Exit(1)
 }
-
-addr := flag.Args()[0];
 
 addrList := strings.Split(addr, ".")
 nmaskList := strings.Split(nmask, ".")
@@ -151,10 +143,38 @@ firstHost := strings.Join(fhostList, ".")
 broadcast := strings.Join(bcastList, ".")
 netmask := strings.Join(nmaskList, ".")
 
+respList = append(respList,subnet)
+respList = append(respList,lastHost)
+respList = append(respList,firstHost)
+respList = append(respList,broadcast)
+respList = append(respList,netmask)
+
+return respList
+}
+
+func main() {
+
+flag.Usage = func() {
+    fmt.Fprintf(os.Stdout, "Usage: subnettr <ip address> <subnet mask>\n\n<ip address> The ip address e.g., 192.168.0.1\n\n<subnet mask> The subnet mask or cidr block e.g., 255.255.255.0 or 24\n\n")
+}
+flag.Parse()
+
+if len(flag.Args()) < 2 {
+  flag.Usage()
+  os.Exit(1)
+}
+
+addr := flag.Args()[0];
+sbnet := flag.Args()[1];
+
+subnet := subnettrCore(addr, sbnet)[0]
+lastHost := subnettrCore(addr, sbnet)[1]
+firstHost := subnettrCore(addr, sbnet)[2]
+broadcast := subnettrCore(addr, sbnet)[3]
+netmask := subnettrCore(addr, sbnet)[4]
+
 fmt.Println("Address Range: " + firstHost + "-" + lastHost)
 fmt.Println("Net Address: " + subnet)
 fmt.Println("Broadcast Address: " + broadcast)
 fmt.Println("Subnet Mask: " + netmask)
-
-
 }
