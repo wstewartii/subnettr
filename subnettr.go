@@ -190,13 +190,15 @@ func handleSubnetting(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 
-	webPort := "8080"
+	webPort := flag.String("port", "8080", "web server port")
 
 	webServer := flag.Bool("server", false, "start a web server")
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stdout, "Usage: subnettr <ip address> <subnet mask>\n\n<ip address> The ip address e.g., 192.168.0.1\n\n<subnet mask> The subnet mask or cidr block e.g., 255.255.255.0 or 24\n\noptions:\n\n\t-server	start a web server\n\n")
+		fmt.Fprintf(os.Stdout, "Usage: subnettr <ip address> <subnet mask>\n\n")
+		flag.PrintDefaults()
 	}
+
 	flag.Parse()
 	if *webServer == false {
 		if len(flag.Args()) < 2 && *webServer == false {
@@ -221,9 +223,10 @@ func main() {
 		fmt.Println("Net Address: " + subnet)
 		fmt.Println("Broadcast Address: " + broadcast)
 		fmt.Println("Subnet Mask: " + netmask)
+
 	} else {
 		http.HandleFunc("/subnet/", handleSubnetting)
-		fmt.Println("starting web server on port", webPort)
-		log.Fatal(http.ListenAndServe(":"+webPort, nil))
+		fmt.Println("starting web server on port", *webPort)
+		log.Fatal(http.ListenAndServe(":"+*webPort, nil))
 	}
 }
