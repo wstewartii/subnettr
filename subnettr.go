@@ -200,6 +200,14 @@ func main() {
 	}
 
 	flag.Parse()
+
+	_, err := strconv.ParseFloat(*webPort, 64)
+
+	if err != nil {
+		fmt.Println("%s is not a valid port number", *webPort)
+		os.Exit(0)
+	}
+
 	if *webServer == false {
 		if len(flag.Args()) < 2 && *webServer == false {
 			flag.Usage()
