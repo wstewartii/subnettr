@@ -58,14 +58,14 @@ func getNetworkObject(addr string, sbnet string) (NetworkObject, error) {
 	var subnet string
 
 	if net.ParseIP(addr) == nil {
-		return NetworkObject{}, errors.New("Invalid ip address format")
+		return NetworkObject{}, errors.New("Invalid ip address format\n")
 	}
 
 	if net.ParseIP(sbnet) == nil {
 		if _, err := strconv.ParseInt(sbnet, 10, 64); err == nil {
 			subnet = cidrToMask(sbnet)
 		} else {
-			return NetworkObject{}, errors.New("Invalid subnet mask/cidr format")
+			return NetworkObject{}, errors.New("Invalid subnet mask/cidr format\n")
 		}
 	} else {
 		subnet = sbnet
