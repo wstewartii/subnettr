@@ -6,10 +6,18 @@ import "errors"
 import "os"
 import "net/http"
 import "log"
-
+import "encoding/json"
 import "flag"
 import "strings"
 import "regexp"
+
+type NetworkInfo struct {
+	FirstHostAddress string
+	LastHostAddress  string
+	Subnet           string
+	BroadcastAddress string
+	SubnetMask       string
+}
 
 func subnettr(addr string, sbnet string, query int) string {
 
@@ -85,9 +93,8 @@ func cidr_to_mask(cidr string) string {
 	return netMask
 }
 
-func subnettrCore(addr string, sbnet string) ([]string, error) {
+func subnettrCore(addr string, sbnet string) (NetworkInfo, error) {
 
-	var respList []string
 	var nmask string
 	var sbnetList []string
 	var bcastList []string
@@ -96,26 +103,26 @@ func subnettrCore(addr string, sbnet string) ([]string, error) {
 
 	addrFormat, aerr := regexp.MatchString("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$", addr)
 	if aerr != nil {
-		return nil, aerr
+		return NetworkInfo{}, aerr
 	}
 	maskFormat, merr := regexp.MatchString("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$", sbnet)
 	if merr != nil {
-		return nil, merr
+		return NetworkInfo{}, merr
 	}
 	cidrFormat, cerr := regexp.MatchString("^[0-9]{1,2}$", sbnet)
 	if cerr != nil {
-		return nil, cerr
+		return NetworkInfo{}, cerr
 	}
 
 	if addrFormat == false {
-		return nil, errors.New("Error: invalid address format!\n")
+		return NetworkInfo{}, errors.New("Error: invalid address format!\n")
 	}
 	if maskFormat == true {
 		nmask = sbnet
 	} else if cidrFormat == true {
 		nmask = cidr_to_mask(sbnet)
 	} else {
-		return nil, errors.New("Error: invalid netmask format!\n")
+		return NetworkInfo{}, errors.New("Error: invalid netmask format!\n")
 	}
 
 	addrList := strings.Split(addr, ".")
@@ -150,17 +157,13 @@ func subnettrCore(addr string, sbnet string) ([]string, error) {
 	broadcast := strings.Join(bcastList, ".")
 	netmask := strings.Join(nmaskList, ".")
 
-	respList = append(respList, subnet)
-	respList = append(respList, lastHost)
-	respList = append(respList, firstHost)
-	respList = append(respList, broadcast)
-	respList = append(respList, netmask)
+	netInfo := NetworkInfo{firstHost, lastHost, subnet, broadcast, netmask}
 
-	return respList, nil
+	return netInfo, nil
 }
 
 func apiUsage(w http.ResponseWriter, r *http.Request) {
-	msg := "How to use.\n\n/subnet/192.168.1.10/255.255.255.0\n\n"
+	msg := "How to use.\n\n/subnet/192.168.1.10/255.255.255.0\n\nor\n\n/subnet/172.16.32.22/23\n\n"
 	fmt.Fprintf(w, msg)
 }
 
@@ -180,11 +183,13 @@ func handleSubnetting(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msg := "Address Range: " + resp[2] + "-" + resp[1] + "\n"
-	msg += "Net Address: " + resp[0] + "\n"
-	msg += "Broadcast Address: " + resp[3] + "\n"
-	msg += "Subnet Mask: " + resp[4] + "\n"
-	fmt.Fprintf(w, msg)
+	nInfo, err := json.Marshal(resp)
+	if err != nil {
+		fmt.Fprintf(w, err.Error())
+		return
+	}
+
+	fmt.Fprintf(w, "%s\n", string(nInfo))
 
 }
 
@@ -195,7 +200,7 @@ func main() {
 	webServer := flag.Bool("server", false, "start a web server")
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stdout, "Usage: subnettr <ip address> <subnet mask>\n\n")
+		fmt.Fprintf(os.Stdout, "Usage: subnettr <ip address> <subnet mask or cidr>\n\n")
 		flag.PrintDefaults()
 	}
 
@@ -221,16 +226,11 @@ func main() {
 			os.Exit(1)
 		}
 
-		subnet := resp[0]
-		lastHost := resp[1]
-		firstHost := resp[2]
-		broadcast := resp[3]
-		netmask := resp[4]
-
-		fmt.Println("Address Range: " + firstHost + "-" + lastHost)
-		fmt.Println("Net Address: " + subnet)
-		fmt.Println("Broadcast Address: " + broadcast)
-		fmt.Println("Subnet Mask: " + netmask)
+		nInfo, err := json.Marshal(resp)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("%s\n", string(nInfo))
 
 	} else {
 		http.HandleFunc("/subnet/", handleSubnetting)

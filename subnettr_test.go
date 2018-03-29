@@ -23,23 +23,23 @@ func TestCidr_To_Mask(t *testing.T) {
 }
 
 func TestSubnettrCore(t *testing.T) {
-	network, err := subnettrCore("192.168.1.5", "27")
+	nInfo, err := subnettrCore("192.168.1.5", "27")
 	if err != nil {
 		t.Errorf(err.Error())
 	}
-	if network[0] != "192.168.1.0" {
-		t.Errorf("Invalid value for network address. Got %s, expected %s.", network[0], "192.168.1.0")
+	if nInfo.Subnet != "192.168.1.0" {
+		t.Errorf("Invalid value for network address. Got %s, expected %s.", nInfo.Subnet, "192.168.1.0")
 	}
-	if network[1] != "192.168.1.30" {
-		t.Errorf("Invalid address for last host on network. Got %s, expected %s.", network[1], "192.168.1.30")
+	if nInfo.LastHostAddress != "192.168.1.30" {
+		t.Errorf("Invalid address for last host on network. Got %s, expected %s.", nInfo.LastHostAddress, "192.168.1.30")
 	}
-	if network[2] != "192.168.1.1" {
-		t.Errorf("Invalid address for first host on network. Got %s, expected %s.", network[2], "192.168.1.1")
+	if nInfo.FirstHostAddress != "192.168.1.1" {
+		t.Errorf("Invalid address for first host on network. Got %s, expected %s.", nInfo.FirstHostAddress, "192.168.1.1")
 	}
-	if network[3] != "192.168.1.31" {
-		t.Errorf("Invalid broadcast address. Got %s, expected %s.", network[3], "192.168.1.31")
+	if nInfo.BroadcastAddress != "192.168.1.31" {
+		t.Errorf("Invalid broadcast address. Got %s, expected %s.", nInfo.BroadcastAddress, "192.168.1.31")
 	}
-	if network[4] != "255.255.255.224" {
-		t.Errorf("Invalid netmask address. Got %s, expected %s.", network[4], "255.255.255.224")
+	if nInfo.SubnetMask != "255.255.255.224" {
+		t.Errorf("Invalid netmask address. Got %s, expected %s.", nInfo.SubnetMask, "255.255.255.224")
 	}
 }
