@@ -204,7 +204,7 @@ func main() {
 	_, err := strconv.ParseFloat(*webPort, 64)
 
 	if err != nil {
-		fmt.Println("%s is not a valid port number", *webPort)
+		fmt.Printf("%s is not a valid port number\n", *webPort)
 		os.Exit(0)
 	}
 
@@ -234,7 +234,7 @@ func main() {
 
 	} else {
 		http.HandleFunc("/subnet/", handleSubnetting)
-		fmt.Println("starting web server on port", *webPort)
+		fmt.Printf("starting web server on port %s\n", *webPort)
 		log.Fatal(http.ListenAndServe(":"+*webPort, nil))
 	}
 }
