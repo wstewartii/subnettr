@@ -101,7 +101,7 @@ func getNetworkObject(addr string, sbnet string) (NetworkObject, error) {
 }
 
 func apiUsage(w http.ResponseWriter, r *http.Request) {
-	msg := "How to use.\n\n/subnet/192.168.1.10/255.255.255.0\n\nor\n\n/subnet/172.16.32.22/23\n\n"
+	msg := "How to use.\n\n/192.168.1.10/255.255.255.0\n\nor\n\n/172.16.32.22/23\n\n"
 	fmt.Fprintf(w, msg)
 }
 
