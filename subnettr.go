@@ -107,13 +107,13 @@ func apiUsage(w http.ResponseWriter, r *http.Request) {
 
 func handleSubnetting(w http.ResponseWriter, r *http.Request) {
 
-	if len(strings.Split(r.URL.Path, "/")) < 4 {
+	if len(strings.Split(r.URL.Path, "/")) < 3 {
 		apiUsage(w, r)
 		return
 	}
 
-	addr := strings.Split(r.URL.Path, "/")[2]
-	sbnet := strings.Split(r.URL.Path, "/")[3]
+	addr := strings.Split(r.URL.Path, "/")[1]
+	sbnet := strings.Split(r.URL.Path, "/")[2]
 
 	resp, err := getNetworkObject(addr, sbnet)
 	if err != nil {
@@ -171,7 +171,7 @@ func main() {
 		fmt.Printf("%s\n", string(nInfo))
 
 	} else {
-		http.HandleFunc("/subnet/", handleSubnetting)
+		http.HandleFunc("/", handleSubnetting)
 		fmt.Printf("starting web server on port %s\n", *webPort)
 		log.Fatal(http.ListenAndServe(":"+*webPort, nil))
 	}
