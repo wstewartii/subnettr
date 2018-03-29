@@ -62,7 +62,7 @@ func subnettr(addr string, sbnet string, query int) string {
 	return conv_resp
 }
 
-func cidr_to_mask(cidr string) string {
+func cidrToMask(cidr string) string {
 
 	var maskList []string
 	var netMask string
@@ -120,7 +120,7 @@ func subnettrCore(addr string, sbnet string) (NetworkInfo, error) {
 	if maskFormat == true {
 		nmask = sbnet
 	} else if cidrFormat == true {
-		nmask = cidr_to_mask(sbnet)
+		nmask = cidrToMask(sbnet)
 	} else {
 		return NetworkInfo{}, errors.New("Error: invalid netmask format!\n")
 	}

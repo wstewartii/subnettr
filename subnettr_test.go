@@ -14,8 +14,8 @@ func TestSubnetter(t *testing.T) {
 
 }
 
-func TestCidr_To_Mask(t *testing.T) {
-	nMask := cidr_to_mask("23")
+func TestCidrToMask(t *testing.T) {
+	nMask := cidrToMask("23")
 	if nMask != "255.255.254.0" {
 		t.Errorf("Invalid netmask return value for subnettr. Got %s, expected %s.", nMask, "255.255.254.0")
 	}
