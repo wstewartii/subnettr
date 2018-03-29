@@ -11,7 +11,7 @@ import "flag"
 import "strings"
 import "regexp"
 
-type NetworkInfo struct {
+type NetworkObject struct {
 	FirstHostAddress string
 	LastHostAddress  string
 	Subnet           string
@@ -93,7 +93,7 @@ func cidrToMask(cidr string) string {
 	return netMask
 }
 
-func subnettrCore(addr string, sbnet string) (NetworkInfo, error) {
+func getNetworkObject(addr string, sbnet string) (NetworkObject, error) {
 
 	var nmask string
 	var sbnetList []string
@@ -103,26 +103,26 @@ func subnettrCore(addr string, sbnet string) (NetworkInfo, error) {
 
 	addrFormat, aerr := regexp.MatchString("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$", addr)
 	if aerr != nil {
-		return NetworkInfo{}, aerr
+		return NetworkObject{}, aerr
 	}
 	maskFormat, merr := regexp.MatchString("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$", sbnet)
 	if merr != nil {
-		return NetworkInfo{}, merr
+		return NetworkObject{}, merr
 	}
 	cidrFormat, cerr := regexp.MatchString("^[0-9]{1,2}$", sbnet)
 	if cerr != nil {
-		return NetworkInfo{}, cerr
+		return NetworkObject{}, cerr
 	}
 
 	if addrFormat == false {
-		return NetworkInfo{}, errors.New("Error: invalid address format!\n")
+		return NetworkObject{}, errors.New("Error: invalid address format!\n")
 	}
 	if maskFormat == true {
 		nmask = sbnet
 	} else if cidrFormat == true {
 		nmask = cidrToMask(sbnet)
 	} else {
-		return NetworkInfo{}, errors.New("Error: invalid netmask format!\n")
+		return NetworkObject{}, errors.New("Error: invalid netmask format!\n")
 	}
 
 	addrList := strings.Split(addr, ".")
@@ -157,9 +157,9 @@ func subnettrCore(addr string, sbnet string) (NetworkInfo, error) {
 	broadcast := strings.Join(bcastList, ".")
 	netmask := strings.Join(nmaskList, ".")
 
-	netInfo := NetworkInfo{firstHost, lastHost, subnet, broadcast, netmask}
+	netObj := NetworkObject{firstHost, lastHost, subnet, broadcast, netmask}
 
-	return netInfo, nil
+	return netObj, nil
 }
 
 func apiUsage(w http.ResponseWriter, r *http.Request) {
@@ -177,19 +177,19 @@ func handleSubnetting(w http.ResponseWriter, r *http.Request) {
 	addr := strings.Split(r.URL.Path, "/")[2]
 	sbnet := strings.Split(r.URL.Path, "/")[3]
 
-	resp, err := subnettrCore(addr, sbnet)
+	resp, err := getNetworkObject(addr, sbnet)
 	if err != nil {
 		fmt.Fprintf(w, err.Error())
 		return
 	}
 
-	nInfo, err := json.Marshal(resp)
+	netObj, err := json.Marshal(resp)
 	if err != nil {
 		fmt.Fprintf(w, err.Error())
 		return
 	}
 
-	fmt.Fprintf(w, "%s\n", string(nInfo))
+	fmt.Fprintf(w, "%s\n", string(netObj))
 
 }
 
@@ -220,7 +220,7 @@ func main() {
 		}
 		addr := flag.Args()[0]
 		sbnet := flag.Args()[1]
-		resp, err := subnettrCore(addr, sbnet)
+		resp, err := getNetworkObject(addr, sbnet)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
