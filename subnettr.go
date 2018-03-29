@@ -11,7 +11,6 @@ import "flag"
 import "strings"
 import "math"
 import "math/bits"
-import "regexp"
 import "errors"
 
 type NetworkObject struct {
@@ -57,22 +56,16 @@ func getNetworkObject(addr string, sbnet string) (NetworkObject, error) {
 	var netAddress net.IP
 	var broadcastAddress net.IP
 	var subnet string
-	hostBits := 0
 
-	maskFormat, err := regexp.MatchString("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$", sbnet)
-	if err != nil {
-		return NetworkObject{}, err
-	}
-	cidrFormat, err := regexp.MatchString("^[0-9]{1,2}$", sbnet)
-	if err != nil {
-		return NetworkObject{}, err
+	if net.ParseIP(addr) == nil {
+		return NetworkObject{}, errors.New("Invalid ip address format")
 	}
 
-	if maskFormat == false {
-		if cidrFormat == true {
+	if net.ParseIP(sbnet) == nil {
+		if _, err := strconv.ParseInt(sbnet, 10, 64); err == nil {
 			subnet = cidrToMask(sbnet)
 		} else {
-			return NetworkObject{}, errors.New("Error: invalid netmask format!\n")
+			return NetworkObject{}, errors.New("Invalid subnet mask/cidr format")
 		}
 	} else {
 		subnet = sbnet
@@ -81,6 +74,7 @@ func getNetworkObject(addr string, sbnet string) (NetworkObject, error) {
 	// get network address
 	ipAddr := net.ParseIP(addr)
 	netMask := net.ParseIP(subnet)
+	hostBits := 0
 	for i, v := range ipAddr {
 		netAddress = append(netAddress, v&netMask[i])
 		// invert the last 4 bytes in the array to calculate the broadcast address
@@ -88,7 +82,7 @@ func getNetworkObject(addr string, sbnet string) (NetworkObject, error) {
 			netMaskInverse := ^netMask[i]
 			broadcastAddress = append(broadcastAddress, netMaskInverse|v)
 
-			//get number of hosts
+			//get number of host bits in the netmask
 			hostBits += bits.OnesCount(uint(netMask[i]))
 		}
 	}
