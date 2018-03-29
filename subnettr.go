@@ -2,64 +2,23 @@ package main
 
 import "fmt"
 import "strconv"
-import "errors"
 import "os"
+import "net"
 import "net/http"
 import "log"
 import "encoding/json"
 import "flag"
 import "strings"
+import "math"
+import "math/bits"
 import "regexp"
+import "errors"
 
 type NetworkObject struct {
-	FirstHostAddress string
-	LastHostAddress  string
-	Subnet           string
-	BroadcastAddress string
-	SubnetMask       string
-}
-
-func subnettr(addr string, sbnet string, query int) string {
-
-	var resp uint8
-	var conv_resp string
-
-	address, aErr := strconv.ParseUint(addr, 10, 8)
-	if aErr != nil {
-		fmt.Println(aErr)
-	}
-
-	subnet, sErr := strconv.ParseUint(sbnet, 10, 64)
-	if sErr != nil {
-		fmt.Println(sErr)
-	}
-
-	netMask := uint8(subnet)
-	ipAddr := uint8(address)
-	netAddress := netMask & ipAddr
-	inverse := ^netMask
-	broadcastAddress := netAddress | inverse
-
-	switch query {
-	case 1:
-		resp = netAddress
-		_ = resp
-	case 2:
-		resp = broadcastAddress
-		_ = resp
-	case 3:
-		resp = netAddress + 1
-		_ = resp
-	case 4:
-		resp = broadcastAddress - 1
-		_ = resp
-	default:
-		resp = netMask
-		_ = resp
-	}
-
-	conv_resp = strconv.FormatUint(uint64(resp), 10)
-	return conv_resp
+	NetworkID           net.IP
+	SubnetMask          net.IP
+	BroadcastAddress    net.IP
+	UsableHostAddresses float64
 }
 
 func cidrToMask(cidr string) string {
@@ -95,69 +54,48 @@ func cidrToMask(cidr string) string {
 
 func getNetworkObject(addr string, sbnet string) (NetworkObject, error) {
 
-	var nmask string
-	var sbnetList []string
-	var bcastList []string
-	var lhostList []string
-	var fhostList []string
+	var netAddress net.IP
+	var broadcastAddress net.IP
+	var subnet string
+	hostBits := 0
 
-	addrFormat, aerr := regexp.MatchString("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$", addr)
-	if aerr != nil {
-		return NetworkObject{}, aerr
+	maskFormat, err := regexp.MatchString("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$", sbnet)
+	if err != nil {
+		return NetworkObject{}, err
 	}
-	maskFormat, merr := regexp.MatchString("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$", sbnet)
-	if merr != nil {
-		return NetworkObject{}, merr
-	}
-	cidrFormat, cerr := regexp.MatchString("^[0-9]{1,2}$", sbnet)
-	if cerr != nil {
-		return NetworkObject{}, cerr
+	cidrFormat, err := regexp.MatchString("^[0-9]{1,2}$", sbnet)
+	if err != nil {
+		return NetworkObject{}, err
 	}
 
-	if addrFormat == false {
-		return NetworkObject{}, errors.New("Error: invalid address format!\n")
-	}
-	if maskFormat == true {
-		nmask = sbnet
-	} else if cidrFormat == true {
-		nmask = cidrToMask(sbnet)
+	if maskFormat == false {
+		if cidrFormat == true {
+			subnet = cidrToMask(sbnet)
+		} else {
+			return NetworkObject{}, errors.New("Error: invalid netmask format!\n")
+		}
 	} else {
-		return NetworkObject{}, errors.New("Error: invalid netmask format!\n")
+		subnet = sbnet
 	}
 
-	addrList := strings.Split(addr, ".")
-	nmaskList := strings.Split(nmask, ".")
+	// get network address
+	ipAddr := net.ParseIP(addr)
+	netMask := net.ParseIP(subnet)
+	for i, v := range ipAddr {
+		netAddress = append(netAddress, v&netMask[i])
+		// invert the last 4 bytes in the array to calculate the broadcast address
+		if i > 11 {
+			netMaskInverse := ^netMask[i]
+			broadcastAddress = append(broadcastAddress, netMaskInverse|v)
 
-	for i, v := range addrList {
-		sbnetList = append(sbnetList, subnettr(v, nmaskList[i], 1))
-	}
-	for i, v := range addrList {
-		bcastList = append(bcastList, subnettr(v, nmaskList[i], 2))
-	}
-	for i, v := range addrList {
-		if i == 3 {
-			fhostList = append(fhostList, subnettr(v, nmaskList[i], 3))
-		} else {
-			fhostList = append(fhostList, subnettr(v, nmaskList[i], 1))
-
-		}
-	}
-	for i, v := range addrList {
-		if i == 3 {
-			lhostList = append(lhostList, subnettr(v, nmaskList[i], 4))
-		} else {
-			lhostList = append(lhostList, subnettr(v, nmaskList[i], 2))
-
+			//get number of hosts
+			hostBits += bits.OnesCount(uint(netMask[i]))
 		}
 	}
 
-	subnet := strings.Join(sbnetList, ".")
-	lastHost := strings.Join(lhostList, ".")
-	firstHost := strings.Join(fhostList, ".")
-	broadcast := strings.Join(bcastList, ".")
-	netmask := strings.Join(nmaskList, ".")
-
-	netObj := NetworkObject{firstHost, lastHost, subnet, broadcast, netmask}
+	numberOfZeros := 32 - hostBits
+	numberOfHosts := math.Pow(2, float64(numberOfZeros)) - 2
+	netObj := NetworkObject{netAddress, netMask, broadcastAddress, numberOfHosts}
 
 	return netObj, nil
 }
