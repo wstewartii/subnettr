@@ -57,11 +57,14 @@ func getNetworkObject(addr string, sbnet string) (NetworkObject, error) {
 	var broadcastAddress net.IP
 	var subnet string
 
+	// Check to see if addr can be parsed as an ip address
 	if net.ParseIP(addr) == nil {
 		return NetworkObject{}, errors.New("Invalid ip address format\n")
 	}
 
+	// Check to see if sbnet is a valid subnet mask
 	if net.ParseIP(sbnet) == nil {
+		// If sbnet is not a subnet mask, check to see if it is a number
 		if _, err := strconv.ParseInt(sbnet, 10, 64); err == nil {
 			subnet = cidrToMask(sbnet)
 		} else {
@@ -77,7 +80,7 @@ func getNetworkObject(addr string, sbnet string) (NetworkObject, error) {
 	hostBits := 0
 	for i, v := range ipAddr {
 		netAddress = append(netAddress, v&netMask[i])
-		// invert the last 4 bytes in the array to calculate the broadcast address
+		// invert the last 4 bits in the 16 element array to calculate the broadcast address
 		if i > 11 {
 			netMaskInverse := ^netMask[i]
 			broadcastAddress = append(broadcastAddress, netMaskInverse|v)
@@ -87,8 +90,10 @@ func getNetworkObject(addr string, sbnet string) (NetworkObject, error) {
 		}
 	}
 
+	// Get the number of host bits or 0s in the subnet mask
 	numberOfZeros := 32 - hostBits
 	numberOfHosts := math.Pow(2, float64(numberOfZeros)) - 2
+
 	netObj := NetworkObject{netAddress, netMask, broadcastAddress, numberOfHosts}
 
 	return netObj, nil
